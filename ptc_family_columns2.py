@@ -12,16 +12,16 @@ import matplotlib.mlab as mlab
 #------------------------#
 
 #Chip to work on (LL,LU,RL,RU)
-chip = 'RU'
+chip = 'LL'
 #Camera number 
-cam = '502'
+cam = '503'
 #Column width to use as ptc region 
 col_size = 50
 #Number of points to cut on shot noise curve on beginning and end
 shot_Begin = 200
 shot_End = 300
 #Number of sigma to clip away from shot noise fit
-shot_sigma = 0.5
+shot_sigma = 0.4
 
 #--------------------#
 # User Paths to Data #
@@ -164,17 +164,17 @@ def find_RN_bias():
     #print stats.sigmaclip(readnoise_im)[1], stats.sigmaclip(readnoise_im)[2]
 
     # the histogram of the data
-    n, bins, patches = plt.hist(rdnoiseclipped, 50, facecolor='red', alpha=0.75)
+    #n, bins, patches = plt.hist(rdnoiseclipped, 50, facecolor='red', alpha=0.75)
     #plt.hist(rdnoiseclipped, 50, normed=1, facecolor='blue', alpha=0.75)
     # add a 'best fit' line
-    y = mlab.normpdf( bins, average(rdnoiseclipped), std(rdnoiseclipped))
-    l = plt.plot(bins, y, 'r--', linewidth=1)
+    #y = mlab.normpdf( bins, average(rdnoiseclipped), std(rdnoiseclipped))
+    #l = plt.plot(bins, y, 'r--', linewidth=1)
 
-    plt.xlabel('Standard Deviation (DN)')
-    plt.ylabel('Number of Pixels')
-    plt.title(r'$\mathrm{Histogram\ of\ Standard\ Deviation\ Bias\ Frame}$')
+    #plt.xlabel('Standard Deviation (DN)')
+    #plt.ylabel('Number of Pixels')
+    #plt.title(r'$\mathrm{Histogram\ of\ Standard\ Deviation\ Bias\ Frame}$')
     #plt.axis([0, 6, 0, 1])
-    plt.grid(True)
+    #plt.grid(True)
 
     #plt.show()
 
@@ -264,16 +264,44 @@ slope_shot_plot = round(p[0],2)
 K_ADC_lis = divide(S_DN_masked,pow(shot_noise_masked,2)) #this is equation 4.20 from Janesick and assumes a quantum_yield=1
 K_ADC = average(K_ADC_lis)
 print 'K(ADC): '+str(K_ADC)
+print 'K(ADC): '+str(std(K_ADC_lis))
 print 'slope of shot curve: '+str(slope_shot_plot)
+print '\n'
+
+group_size = 10
+index = len(K_ADC_lis)/group_size
+
+group_Kadc = []
+group_lis  = []
+group_sig  = []
+for i in range(index-1):
+    k_avg   = average(K_ADC_lis[i:i+1])
+    Sig_avg = average(S_DN_masked[i:i+1]) 
+
+    group_Kadc.append(k_avg)
+    group_lis.append(i*group_size)
+    group_sig.append(Sig_avg)
+
+    print 'K(ADC) '+str(i*group_size)+' '+str(k_avg)
+
+print '\n'
+print 'K(ADC) Avg: '+str(average(group_Kadc))
+print 'K(ADC) STD: '+str(std(group_Kadc))
+
+scatter(group_sig,group_Kadc)
+xlabel('Signal (DN)',fontsize='large')
+ylabel('K(ADC) (e-/DN)',fontsize='large')
+title('K(ADC) for Cam'+cam+' '+str(chip),fontsize='x-large')
+show()
 
 #---------------#
 # Print Results #
 #---------------#
 
 #just prints a list of the results 
-print str('Image  '), str('Total     '), str('Read_Shot           '), str('Shot              '), str('S(DN) ')
-for i in range(len(total_noise_list)):
-    print str(i)+'      '+str(total_noise_list[i])+'      '+str(Read_Shot_Noise_list[i])+'      '+str(shot_noise_list[i])+'      '+str(S_DN_list[i])
+#print str('Image  '), str('Total     '), str('Read_Shot           '), str('Shot              '), str('S(DN) ')
+#for i in range(len(total_noise_list)):
+#    print str(i)+'      '+str(total_noise_list[i])+'      '+str(Read_Shot_Noise_list[i])+'      '+str(shot_noise_list[i])+'      '+str(S_DN_list[i])
 
 #------------------#
 # Plot PTC Results #
